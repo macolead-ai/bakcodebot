@@ -1,4 +1,4 @@
-this is my bot token and how will i go about the enviroment setup '' import logging
+import logging
 import os
 import io
 import asyncio
