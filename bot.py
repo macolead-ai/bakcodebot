@@ -23,7 +23,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-BOT_TOKEN = os.environ.get('BOT_TOKEN')
+# UPDATED: Now looking for a unique key called 'BARCODE_BOT_TOKEN'
+BOT_TOKEN = os.environ.get('BARCODE_BOT_TOKEN')
 
 # Modes
 MODE_WAIT_DATA = "wait_data"
@@ -324,7 +325,7 @@ async def run_web():
 
 async def run_bot():
     if not BOT_TOKEN:
-        logger.critical("FATAL: BOT_TOKEN is missing!")
+        logger.critical("FATAL: BARCODE_BOT_TOKEN is missing!")
         return
 
     try:
