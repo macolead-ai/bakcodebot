@@ -16,7 +16,7 @@ import barcode
 from barcode.writer import ImageWriter
 from PIL import Image
 
-# Enable logging
+# Ativar logs
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -25,83 +25,79 @@ logger = logging.getLogger(__name__)
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 
-# Modes
+# Modos
 MODE_WAIT_DATA = "wait_data"
 
-# Barcode types with their specs
+# Tipos de códigos de barras com as respetivas especificações
 BARCODE_TYPES = [
     {
         "key": "ean13",
-        "label": "🏷 EAN-13 (retail products)",
+        "label": "🏷 EAN-13 (produtos de retalho)",
         "code": "ean13",
-        "format": "Exactly *12 digits* (checksum auto-added).\nExample: `978020137962`",
+        "format": "Exatamente *12 dígitos* (dígito de controlo automático).\nExemplo: `978020137962`",
         "validator": lambda s: s.isdigit() and len(s) == 12,
     },
     {
         "key": "ean8",
-        "label": "🏷 EAN-8 (short retail)",
+        "label": "🏷 EAN-8 (retalho curto)",
         "code": "ean8",
-        "format": "Exactly *7 digits* (checksum auto-added).\nExample: `9638507`",
+        "format": "Exatamente *7 dígitos* (dígito de controlo automático).\nExemplo: `9638507`",
         "validator": lambda s: s.isdigit() and len(s) == 7,
     },
     {
         "key": "upca",
-        "label": "🛒 UPC-A (US/Canada retail)",
+        "label": "🛒 UPC-A (retalho EUA/Canadá)",
         "code": "upca",
-        "format": "Exactly *11 digits* (checksum auto-added).\nExample: `03600029145`",
+        "format": "Exatamente *11 dígitos* (dígito de controlo automático).\nExemplo: `03600029145`",
         "validator": lambda s: s.isdigit() and len(s) == 11,
     },
     {
         "key": "code128",
-        "label": "🔠 Code 128 (any text)",
+        "label": "🔠 Code 128 (qualquer texto)",
         "code": "code128",
-        "format": "Any ASCII text (letters, digits, symbols).\nExample: `HELLO-2025`",
+        "format": "Qualquer texto ASCII (letras, números, símbolos).\nExemplo: `OLA-2025`",
         "validator": lambda s: 1 <= len(s) <= 80,
     },
     {
         "key": "code39",
-        "label": "🔡 Code 39 (alphanumeric)",
+        "label": "🔡 Code 39 (alfanumérico)",
         "code": "code39",
-        "format": "UPPERCASE letters, digits, and `-. $/+%`.\nExample: `PRODUCT-001`",
+        "format": "Letras MAIÚSCULAS, números, e `-. $/+%`.\nExemplo: `PRODUTO-001`",
         "validator": lambda s: all(c in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-. $/+%" for c in s.upper()) and len(s) <= 50,
     },
     {
         "key": "isbn13",
-        "label": "📚 ISBN-13 (books)",
+        "label": "📚 ISBN-13 (livros)",
         "code": "isbn13",
-        "format": "Exactly *12 digits* (checksum auto-added).\nExample: `978014028329`",
+        "format": "Exatamente *12 dígitos* (dígito de controlo automático).\nExemplo: `978014028329`",
         "validator": lambda s: s.isdigit() and len(s) == 12,
     },
     {
         "key": "itf",
-        "label": "📦 ITF (Interleaved 2 of 5)",
+        "label": "📦 ITF (Intercalado 2 de 5)",
         "code": "itf",
-        "format": "Even number of digits.\nExample: `1234567890`",
+        "format": "Número PAR de dígitos.\nExemplo: `1234567890`",
         "validator": lambda s: s.isdigit() and len(s) >= 4 and len(s) % 2 == 0,
     },
 ]
 
-
-# ---------- Helpers ----------
+# ---------- Ajudantes ----------
 
 def main_menu_markup() -> InlineKeyboardMarkup:
     keyboard = [
-        [InlineKeyboardButton("⚡ Create Barcode", callback_data="menu_create")],
-        [InlineKeyboardButton("ℹ️ Help", callback_data="menu_help")],
+        [InlineKeyboardButton("⚡ Criar Código de Barras", callback_data="menu_create")],
+        [InlineKeyboardButton("ℹ️ Ajuda", callback_data="menu_help")],
     ]
     return InlineKeyboardMarkup(keyboard)
 
-
 def types_markup() -> InlineKeyboardMarkup:
     rows = [[InlineKeyboardButton(t["label"], callback_data=f"bt_{t['key']}")] for t in BARCODE_TYPES]
-    rows.append([InlineKeyboardButton("🏠 Main Menu", callback_data="menu_home")])
+    rows.append([InlineKeyboardButton("🏠 Menu Principal", callback_data="menu_home")])
     return InlineKeyboardMarkup(rows)
-
 
 def reset_user_state(context: ContextTypes.DEFAULT_TYPE) -> None:
     for key in ('mode', 'bc_type'):
         context.user_data.pop(key, None)
-
 
 def get_type(key: str):
     for t in BARCODE_TYPES:
@@ -109,8 +105,7 @@ def get_type(key: str):
             return t
     return None
 
-
-# ---------- Commands ----------
+# ---------- Comandos ----------
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
@@ -118,34 +113,33 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reset_user_state(context)
 
     welcome = (
-        "👋 *Welcome to Barcode Generator Bot!*\n\n"
-        "I create professional barcodes in seconds 📊\n\n"
-        "✨ *7 supported formats:*\n"
+        "👋 *Bem-vindo ao Gerador de Códigos de Barras!*\n\n"
+        "Eu crio códigos de barras profissionais em segundos 📊\n\n"
+        "✨ *7 formatos suportados:*\n"
         "• 🏷 EAN-13 / EAN-8\n"
         "• 🛒 UPC-A\n"
         "• 🔠 Code 128 / Code 39\n"
         "• 📚 ISBN-13\n"
         "• 📦 ITF\n\n"
-        "Output: hi-res PNG ready to print\n\n"
-        "Tap below to begin:"
+        "Resultado: imagem PNG de alta resolução pronta a imprimir!\n\n"
+        "Toque abaixo para começar:"
     )
     await update.message.reply_text(welcome, reply_markup=main_menu_markup(), parse_mode='Markdown')
 
-
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
-        "ℹ️ *How to use*\n\n"
-        "1. Tap ⚡ *Create Barcode*\n"
-        "2. Pick a barcode format\n"
-        "3. Send the data (digits or text)\n"
-        "4. Get the barcode!\n\n"
-        "💡 *Quick guide:*\n"
-        "• `EAN-13` → retail products worldwide\n"
-        "• `UPC-A` → US retail products\n"
-        "• `Code 128` → any text, common in logistics\n"
-        "• `Code 39` → industrial, uppercase\n"
-        "• `ISBN` → books\n\n"
-        "Use /cancel anytime to reset."
+        "ℹ️ *Como usar*\n\n"
+        "1. Toque em ⚡ *Criar Código de Barras*\n"
+        "2. Escolha o formato desejado\n"
+        "3. Envie os dados (números ou texto)\n"
+        "4. Receba o seu código de barras!\n\n"
+        "💡 *Guia rápido:*\n"
+        "• `EAN-13` → produtos de retalho a nível mundial\n"
+        "• `UPC-A` → produtos de retalho EUA/Canadá\n"
+        "• `Code 128` → qualquer texto, muito comum em logística\n"
+        "• `Code 39` → uso industrial, letras maiúsculas\n"
+        "• `ISBN` → livros\n\n"
+        "Use /cancel a qualquer momento para reiniciar."
     )
     if update.message:
         await update.message.reply_text(text, parse_mode='Markdown', reply_markup=main_menu_markup())
@@ -154,16 +148,14 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text, parse_mode='Markdown', reply_markup=main_menu_markup()
         )
 
-
 async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reset_user_state(context)
     await update.message.reply_text(
-        "❌ Cancelled. Use /start to begin again.",
+        "❌ Ação cancelada. Use /start para recomeçar.",
         reply_markup=main_menu_markup(),
     )
 
-
-# ---------- Menu callbacks ----------
+# ---------- Callbacks de Menu ----------
 
 async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -173,7 +165,7 @@ async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data == "menu_home":
         reset_user_state(context)
         await query.edit_message_text(
-            "🏠 *Main Menu*\nChoose an option below:",
+            "🏠 *Menu Principal*\nEscolha uma opção abaixo:",
             reply_markup=main_menu_markup(),
             parse_mode='Markdown',
         )
@@ -183,7 +175,7 @@ async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data == "menu_create":
         await query.edit_message_text(
-            "⚡ *Create Barcode*\n\nPick a barcode format:",
+            "⚡ *Criar Código de Barras*\n\nEscolha um formato:",
             reply_markup=types_markup(),
             parse_mode='Markdown',
         )
@@ -192,19 +184,18 @@ async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         bt_key = data.split("_", 1)[1]
         t = get_type(bt_key)
         if not t:
-            await query.edit_message_text("⚠️ Unknown type.", reply_markup=main_menu_markup())
+            await query.edit_message_text("⚠️ Formato desconhecido.", reply_markup=main_menu_markup())
             return
         context.user_data['bc_type'] = bt_key
         context.user_data['mode'] = MODE_WAIT_DATA
         await query.edit_message_text(
             f"📥 *{t['label']}*\n\n"
-            f"Send the data to encode:\n\n{t['format']}\n\n"
-            "_Use /cancel to abort._",
+            f"Envie os dados que pretende codificar:\n\n{t['format']}\n\n"
+            "_Use /cancel para abortar._",
             parse_mode='Markdown',
         )
 
-
-# ---------- Text handler ----------
+# ---------- Tratamento de Texto ----------
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data.get('mode') != MODE_WAIT_DATA:
@@ -216,19 +207,19 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not t:
         return
 
-    # Auto-uppercase for Code 39
+    # Tornar automaticamente maiúsculas para o Code 39
     if bt_key == "code39":
         text = text.upper()
 
     if not t["validator"](text):
         await update.message.reply_text(
-            f"⚠️ Invalid format for *{t['label']}*.\n\n{t['format']}\n\nTry again or /cancel.",
+            f"⚠️ Formato inválido para *{t['label']}*.\n\n{t['format']}\n\nTente novamente ou use /cancel.",
             parse_mode='Markdown',
         )
         return
 
     chat_id = update.effective_chat.id
-    status = await update.message.reply_text("⏳ Generating barcode…")
+    status = await update.message.reply_text("⏳ A gerar o código de barras…")
 
     try:
         loop = asyncio.get_event_loop()
@@ -236,42 +227,41 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             None, generate_barcode_image, t["code"], text
         )
 
-        out_name = f"barcode_{bt_key}.png"
+        out_name = f"codigo_{bt_key}.png"
 
         await status.delete()
-        # Send as photo (preview) and document (hi-res)
+        # Enviar como foto (pré-visualização) e como documento (alta resolução)
         await context.bot.send_photo(
             chat_id=chat_id,
             photo=InputFile(io.BytesIO(out_bytes), filename=out_name),
-            caption=f"✅ *Barcode Ready!*\n\nType: {t['label']}\nData: `{text}`",
+            caption=f"✅ *Código de Barras Pronto!*\n\nTipo: {t['label']}\nDados: `{text}`",
             parse_mode='Markdown',
         )
         await context.bot.send_document(
             chat_id=chat_id,
             document=InputFile(io.BytesIO(out_bytes), filename=out_name),
-            caption="📥 Hi-res PNG (ready to print)",
+            caption="📥 PNG em alta resolução (pronto a imprimir)",
             reply_markup=main_menu_markup(),
         )
 
     except Exception as e:
-        logger.error(f"Barcode generation failed: {e}")
+        logger.error(f"Falha na geração do código de barras: {e}")
         try:
             await status.delete()
         except Exception:
             pass
         await context.bot.send_message(
             chat_id=chat_id,
-            text=f"❌ Failed: {e}",
+            text=f"❌ Ocorreu um erro: {e}",
             reply_markup=main_menu_markup(),
         )
     finally:
         reset_user_state(context)
 
-
-# ---------- Barcode generation ----------
+# ---------- Geração do Código de Barras ----------
 
 def generate_barcode_image(code_type: str, data: str) -> bytes:
-    """Render barcode to PNG bytes using python-barcode."""
+    """Renderiza o código de barras para bytes de imagem PNG usando o python-barcode."""
     BARCODE_CLASS = barcode.get_barcode_class(code_type)
 
     writer = ImageWriter()
@@ -291,7 +281,7 @@ def generate_barcode_image(code_type: str, data: str) -> bytes:
     bc.write(buf, options=options)
     buf.seek(0)
 
-    # Optionally upscale for crisp print quality
+    # Melhorar o tamanho opcionalmente para uma qualidade de impressão nítida
     img = Image.open(buf).convert("RGB")
     w, h = img.size
     if w < 1200:
@@ -302,12 +292,10 @@ def generate_barcode_image(code_type: str, data: str) -> bytes:
     img.save(out, format="PNG", optimize=True)
     return out.getvalue()
 
-
-# ---------- Dummy web server (keeps Render Web Service alive) ----------
+# ---------- Servidor web fictício (mantém o Render Web Service ativo) ----------
 
 async def health(request):
     return web.Response(text="Bot is running")
-
 
 async def run_web():
     port = int(os.environ.get("PORT", 10000))
@@ -317,14 +305,13 @@ async def run_web():
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
-    logger.info(f"Health server listening on port {port}")
+    logger.info(f"Servidor health-check ativo na porta {port}")
 
-
-# ---------- Runner ----------
+# ---------- Executor (Runner) ----------
 
 async def run_bot():
     if not BOT_TOKEN:
-        logger.critical("FATAL: BOT_TOKEN is missing!")
+        logger.critical("FATAL: O BOT_TOKEN está em falta!")
         return
 
     try:
@@ -338,7 +325,7 @@ async def run_bot():
 
         await run_web()
 
-        logger.info("Bot is now polling...")
+        logger.info("Bot está agora a aguardar comandos...")
         await application.initialize()
         await application.start()
         await application.updater.start_polling(drop_pending_updates=True)
@@ -347,21 +334,19 @@ async def run_bot():
         await stop_event.wait()
 
     except Exception as e:
-        logger.error(f"Failed to start bot: {e}")
+        logger.error(f"Falha ao iniciar o bot: {e}")
     finally:
         if 'application' in locals():
             await application.stop()
             await application.shutdown()
 
-
 def main():
     try:
         asyncio.run(run_bot())
     except KeyboardInterrupt:
-        logger.info("Bot stopped by user.")
+        logger.info("Bot parado pelo utilizador.")
     except Exception as e:
-        logger.error(f"Main loop error: {e}")
-
+        logger.error(f"Erro no loop principal: {e}")
 
 if __name__ == '__main__':
     main()
