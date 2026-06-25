@@ -117,8 +117,11 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # 1. Se estiver no modo REDIRECT
     if GLOBAL_BOT_MODE == "REDIRECT":
         welcome_text = (
-            "Antes de mais, obrigado por estar aqui. 🙏 Agradecemos imenso por ter dedicado o seu tempo para se juntar a este espaço. Seja por acaso ou por recomendação de um amigo, saiba que agora faz parte de algo especial. 💫\n\n"
-            "Este não é apenas mais um grupo de apostas. ❌ Esta é uma comunidade construída sobre uma paixão partilhada: o amor pelo jogo ⚽🏀, a emoção da análise 📊 e a procura de decisões informadas e inteligentes. 🧠 Não acreditamos na sorte cega. 🎲 Acreditamos na preparação, na investigação e na disciplina. 📚 E é exatamente isso que oferecemos todos os dias. 💪"
+            "🔥 SIGNAL ROOM WITHOUT MARTINGALE \n"
+            "✅ Real-time market analysis\n"
+            "📋 Updated signal list\n"
+            "🚀 Live signals 24/7\n"
+            " 📲 Join now: @suporteguardiansinais"
         )
         await update.message.reply_text(welcome_text)
         
