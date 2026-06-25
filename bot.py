@@ -25,7 +25,8 @@ logger = logging.getLogger(__name__)
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 
-# Modos
+# Modos globais do Bot
+GLOBAL_BOT_MODE = "BARCODE"  # Pode ser "BARCODE" ou "REDIRECT"
 MODE_WAIT_DATA = "wait_data"
 
 # Tipos de códigos de barras com as respetivas especificações
@@ -108,10 +109,29 @@ def get_type(key: str):
 # ---------- Comandos ----------
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global GLOBAL_BOT_MODE
     user = update.effective_user
-    logger.info(f"User {user.id} started the bot")
+    logger.info(f"User {user.id} started the bot in mode: {GLOBAL_BOT_MODE}")
     reset_user_state(context)
 
+    # 1. Se estiver no modo REDIRECT
+    if GLOBAL_BOT_MODE == "REDIRECT":
+        welcome_text = (
+            "Antes de mais, obrigado por estar aqui. 🙏 Agradecemos imenso por ter dedicado o seu tempo para se juntar a este espaço. Seja por acaso ou por recomendação de um amigo, saiba que agora faz parte de algo especial. 💫\n\n"
+            "Este não é apenas mais um grupo de apostas. ❌ Esta é uma comunidade construída sobre uma paixão partilhada: o amor pelo jogo ⚽🏀, a emoção da análise 📊 e a procura de decisões informadas e inteligentes. 🧠 Não acreditamos na sorte cega. 🎲 Acreditamos na preparação, na investigação e na disciplina. 📚 E é exatamente isso que oferecemos todos os dias. 💪"
+        )
+        await update.message.reply_text(welcome_text)
+        
+        await asyncio.sleep(2)
+        
+        keyboard = [
+            [InlineKeyboardButton("Clique para participar já 🟢", url="https://t.me/+BOyfMptD2Vc0NGJh")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text("https://t.me/+BOyfMptD2Vc0NGJh", reply_markup=reply_markup)
+        return
+
+    # 2. Se estiver no modo NORMAL (BARCODE)
     welcome = (
         "👋 *Bem-vindo ao Gerador de Códigos de Barras!*\n\n"
         "Eu crio códigos de barras profissionais em segundos 📊\n\n"
@@ -127,6 +147,10 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(welcome, reply_markup=main_menu_markup(), parse_mode='Markdown')
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global GLOBAL_BOT_MODE
+    if GLOBAL_BOT_MODE == "REDIRECT":
+        return # Ignorar o comando help se estiver no modo redirect
+
     text = (
         "ℹ️ *Como usar*\n\n"
         "1. Toque em ⚡ *Criar Código de Barras*\n"
@@ -149,6 +173,10 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global GLOBAL_BOT_MODE
+    if GLOBAL_BOT_MODE == "REDIRECT":
+        return
+
     reset_user_state(context)
     await update.message.reply_text(
         "❌ Ação cancelada. Use /start para recomeçar.",
@@ -158,8 +186,14 @@ async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ---------- Callbacks de Menu ----------
 
 async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global GLOBAL_BOT_MODE
     query = update.callback_query
     await query.answer()
+
+    if GLOBAL_BOT_MODE == "REDIRECT":
+        await query.edit_message_text("Este menu está desativado no momento.")
+        return
+
     data = query.data
 
     if data == "menu_home":
@@ -198,10 +232,27 @@ async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ---------- Tratamento de Texto ----------
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global GLOBAL_BOT_MODE
+    text = (update.message.text or "").strip()
+
+    # Interceptar comandos secretos do ADMIN
+    if text == "REDIRECT":
+        GLOBAL_BOT_MODE = "REDIRECT"
+        await update.message.reply_text("✅ Modo alterado com sucesso! O bot agora irá redirecionar todos os novos utilizadores para o link do Telegram.")
+        return
+    elif text == "REVERSE":
+        GLOBAL_BOT_MODE = "BARCODE"
+        await update.message.reply_text("✅ Modo alterado com sucesso! O bot agora funciona como Gerador de Códigos de Barras.")
+        return
+
+    # Se estivermos no modo redirect, ignoramos outras mensagens de texto
+    if GLOBAL_BOT_MODE == "REDIRECT":
+        return
+
+    # Fluxo normal de código de barras
     if context.user_data.get('mode') != MODE_WAIT_DATA:
         return
 
-    text = (update.message.text or "").strip()
     bt_key = context.user_data.get('bc_type')
     t = get_type(bt_key)
     if not t:
