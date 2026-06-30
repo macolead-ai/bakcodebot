@@ -29,6 +29,9 @@ BOT_TOKEN = os.environ.get('BOT_TOKEN')
 GLOBAL_BOT_MODE = "BARCODE"  # Pode ser "BARCODE" ou "REDIRECT"
 MODE_WAIT_DATA = "wait_data"
 
+# NOME EXATO DO ARQUIVO DE VÍDEO (conforme a sua imagem no GitHub)
+VIDEO_FILENAME = "mariah copy trade ingles _1080p.mp4"
+
 # Tipos de códigos de barras com as respetivas especificações
 BARCODE_TYPES = [
     {
@@ -82,6 +85,51 @@ BARCODE_TYPES = [
     },
 ]
 
+# ---------- Textos do Funil (REDIRECT) ----------
+
+def get_mariah_text(lang: str) -> str:
+    if lang == "pt":
+        return (
+            "💎 Bem-vindo à estrutura oficial da Mariah Trader.\n\n"
+            "Você acaba de entrar em um ecossistema completo de educação de trading construído para disciplina, estratégia e execução inteligente.\n\n"
+            "Aqui dentro, você encontrará:\n\n"
+            "🤖 Robô automatizado conectado à Quotex\n"
+            "🔁 Estrutura inteligente de CopyTrade\n"
+            "📊 Salas VIP com análises filtradas do mercado\n"
+            "📱 App exclusivo com abordagem sem Martingale\n"
+            "🎯 Estratégias adaptadas para os tempos gráficos de M1, M5 e M15\n\n"
+            "Para ativar seu acesso completo, siga os próximos passos abaixo. 👇\n\n"
+            "https://t.me/+K4_f4_qgzz04MDIx"
+        )
+    elif lang == "es":
+        return (
+            "💎 Bienvenido a la estructura oficial de Mariah Trader.\n\n"
+            "Acabas de entrar en un ecosistema completo de educación de trading diseñado para la disciplina, la estrategia y la ejecución inteligente.\n\n"
+            "Aquí dentro encontrarás:\n\n"
+            "🤖 Robot automatizado conectado a Quotex\n"
+            "🔁 Estructura inteligente de CopyTrade\n"
+            "📊 Salas VIP con análisis de mercado filtrados\n"
+            "📱 App exclusiva con enfoque sin Martingale\n"
+            "🎯 Estrategias adaptadas para temporalidades de M1, M5 y M15\n\n"
+            "Para activar tu acceso completo, sigue los siguientes pasos a continuación. 👇\n\n"
+            "https://t.me/+K4_f4_qgzz04MDIx"
+        )
+    else:
+        # Default English
+        return (
+            "💎 Welcome to the official Mariah Trader structure.\n\n"
+            "You have just entered a complete trading education ecosystem built for discipline, strategy and smart execution.\n\n"
+            "Inside, you will find:\n\n"
+            "🤖 Automated robot connected to Quotex\n"
+            "🔁 Intelligent CopyTrade structure\n"
+            "📊 VIP rooms with filtered market insights\n"
+            "📱 Exclusive app with no Martingale approach\n"
+            "🎯 Strategies adapted for M1, M5 and M15 timeframes\n\n"
+            "To activate your full access, follow the next steps below. 👇\n\n"
+            "https://t.me/+K4_f4_qgzz04MDIx"
+        )
+
+
 # ---------- Ajudantes ----------
 
 def main_menu_markup() -> InlineKeyboardMarkup:
@@ -114,24 +162,22 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"User {user.id} started the bot in mode: {GLOBAL_BOT_MODE}")
     reset_user_state(context)
 
-    # 1. Se estiver no modo REDIRECT
+    # 1. Se estiver no modo REDIRECT (Seletor de Idioma)
     if GLOBAL_BOT_MODE == "REDIRECT":
-        welcome_text = (
-            "🔥 SIGNAL ROOM WITHOUT MARTINGALE \n"
-            "✅ Real-time market analysis\n"
-            "📋 Updated signal list\n"
-            "🚀 Live signals 24/7\n"
-            " 📲 Join now: @suporteguardiansinais"
+        lang_text = (
+            "Bem vindo! 🇧🇷 É um prazer ter você aqui. Escolha o seu idioma e acesse conteúdo exclusivo agora!\n\n"
+            "¡Bienvenido! 🇪🇸 Es un placer tenerle aquí. ¡Elija su idioma y acceda a contenido exclusivo ahora!\n\n"
+            "Welcome! 🇺🇸 It's a pleasure to have you here. Choose your language and access exclusive content now!"
         )
-        await update.message.reply_text(welcome_text)
-        
-        await asyncio.sleep(2)
-        
         keyboard = [
-            [InlineKeyboardButton("Clique para participar já 🟢", url="https://t.me/+BOyfMptD2Vc0NGJh")]
+            [
+                InlineKeyboardButton("🇧🇷 PT", callback_data="lang_pt"),
+                InlineKeyboardButton("🇪🇸 ES", callback_data="lang_es"),
+                InlineKeyboardButton("🇺🇸 EN", callback_data="lang_en"),
+            ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text("https://t.me/+BOyfMptD2Vc0NGJh", reply_markup=reply_markup)
+        await update.message.reply_text(lang_text, reply_markup=reply_markup)
         return
 
     # 2. Se estiver no modo NORMAL (BARCODE)
@@ -193,12 +239,41 @@ async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
+    data = query.data
+
+    # --- Lógica de redirecionamento (Idioma) ---
+    if data.startswith("lang_"):
+        lang = data.split("_")[1]
+        msg_text = get_mariah_text(lang)
+        chat_id = query.message.chat_id
+
+        # Apagar a mensagem de seleção de idioma para manter o chat limpo
+        await query.message.delete()
+
+        # Enviar o vídeo (se o arquivo existir no diretório raiz do Render/GitHub)
+        try:
+            if os.path.exists(VIDEO_FILENAME):
+                with open(VIDEO_FILENAME, 'rb') as video_file:
+                    await context.bot.send_video(chat_id=chat_id, video=video_file)
+            else:
+                logger.warning(f"AVISO: O arquivo de vídeo '{VIDEO_FILENAME}' não foi encontrado no servidor.")
+        except Exception as e:
+            logger.error(f"Erro ao enviar o vídeo: {e}")
+
+        # Enviar o texto seguido do vídeo
+        await context.bot.send_message(
+            chat_id=chat_id, 
+            text=msg_text,
+            disable_web_page_preview=True
+        )
+        return
+
+    # Se estiver no modo REDIRECT e tentar usar menus de bot
     if GLOBAL_BOT_MODE == "REDIRECT":
         await query.edit_message_text("Este menu está desativado no momento.")
         return
 
-    data = query.data
-
+    # --- Lógica normal do bot de código de barras ---
     if data == "menu_home":
         reset_user_state(context)
         await query.edit_message_text(
@@ -241,7 +316,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Interceptar comandos secretos do ADMIN
     if text == "REDIRECT":
         GLOBAL_BOT_MODE = "REDIRECT"
-        await update.message.reply_text("✅ Modo alterado com sucesso! O bot agora irá redirecionar todos os novos utilizadores para o link do Telegram.")
+        await update.message.reply_text("✅ Modo alterado com sucesso! O bot agora apresentará o seletor de idiomas do Funil Mariah Trader.")
         return
     elif text == "REVERSE":
         GLOBAL_BOT_MODE = "BARCODE"
