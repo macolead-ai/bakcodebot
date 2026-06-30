@@ -98,8 +98,7 @@ def get_mariah_text(lang: str) -> str:
             "📊 Salas VIP com análises filtradas do mercado\n"
             "📱 App exclusivo com abordagem sem Martingale\n"
             "🎯 Estratégias adaptadas para os tempos gráficos de M1, M5 e M15\n\n"
-            "Para ativar seu acesso completo, siga os próximos passos abaixo. 👇\n\n"
-            "https://t.me/+K4_f4_qgzz04MDIx"
+            "Para ativar seu acesso completo, siga os próximos passos abaixo. 👇"
         )
     elif lang == "es":
         return (
@@ -111,8 +110,7 @@ def get_mariah_text(lang: str) -> str:
             "📊 Salas VIP con análisis de mercado filtrados\n"
             "📱 App exclusiva con enfoque sin Martingale\n"
             "🎯 Estrategias adaptadas para temporalidades de M1, M5 y M15\n\n"
-            "Para activar tu acceso completo, sigue los siguientes pasos a continuación. 👇\n\n"
-            "https://t.me/+K4_f4_qgzz04MDIx"
+            "Para activar tu acceso completo, sigue los siguientes pasos a continuación. 👇"
         )
     else:
         # Default English
@@ -125,8 +123,7 @@ def get_mariah_text(lang: str) -> str:
             "📊 VIP rooms with filtered market insights\n"
             "📱 Exclusive app with no Martingale approach\n"
             "🎯 Strategies adapted for M1, M5 and M15 timeframes\n\n"
-            "To activate your full access, follow the next steps below. 👇\n\n"
-            "https://t.me/+K4_f4_qgzz04MDIx"
+            "To activate your full access, follow the next steps below. 👇"
         )
 
 
