@@ -32,10 +32,8 @@ MODE_WAIT_DATA = "wait_data"
 # ⚠️ EDIT THIS: must match the exact filename of the video you uploaded to your GitHub repo root.
 VIDEO_FILENAME = "intro.mp4"
 
-# Channel link shown in the welcome message
-CHANNEL_LINK = "https://t.me/+K4_f4_qgzz04MDIx"
-
 # ---------- Welcome text (Mariah Trader) in 3 languages ----------
+# NOTE: No channel link — SendPulse will add it via the funnel.
 
 def get_welcome_text(lang: str) -> str:
     if lang == "pt":
@@ -49,8 +47,7 @@ def get_welcome_text(lang: str) -> str:
             "📊 Salas VIP com análises filtradas do mercado\n"
             "📱 App exclusivo com abordagem sem Martingale\n"
             "🎯 Estratégias adaptadas para os tempos gráficos de M1, M5 e M15\n\n"
-            "Para ativar seu acesso completo, siga os próximos passos abaixo. 👇\n\n"
-            f"{CHANNEL_LINK}"
+            "Para ativar seu acesso completo, siga os próximos passos abaixo. 👇"
         )
     if lang == "es":
         return (
@@ -63,8 +60,7 @@ def get_welcome_text(lang: str) -> str:
             "📊 Salas VIP con análisis de mercado filtrados\n"
             "📱 App exclusiva con enfoque sin Martingale\n"
             "🎯 Estrategias adaptadas para temporalidades de M1, M5 y M15\n\n"
-            "Para activar tu acceso completo, sigue los siguientes pasos a continuación. 👇\n\n"
-            f"{CHANNEL_LINK}"
+            "Para activar tu acceso completo, sigue los siguientes pasos a continuación. 👇"
         )
     # English default
     return (
@@ -77,8 +73,7 @@ def get_welcome_text(lang: str) -> str:
         "📊 VIP rooms with filtered market insights\n"
         "📱 Exclusive app with no Martingale approach\n"
         "🎯 Strategies adapted for M1, M5 and M15 timeframes\n\n"
-        "To activate your full access, follow the next steps below. 👇\n\n"
-        f"{CHANNEL_LINK}"
+        "To activate your full access, follow the next steps below. 👇"
     )
 
 
@@ -270,11 +265,11 @@ async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             logger.warning(f"Video file '{VIDEO_FILENAME}' not found at repo root")
 
-        # 2. Send the localized welcome text (with channel link preview)
+        # 2. Send the localized welcome text (no link — SendPulse handles that)
         await context.bot.send_message(
             chat_id=chat_id,
             text=get_welcome_text(lang),
-            disable_web_page_preview=False,
+            disable_web_page_preview=True,
         )
         return
 
